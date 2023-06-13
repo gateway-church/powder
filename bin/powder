@@ -84,13 +84,13 @@ module Powder
 
     desc "down", "Disable pow"
     def down
-      if File.exists? POW_FIREWALL_PLIST_PATH
+      if File.exist? POW_FIREWALL_PLIST_PATH
         if not %x{sudo launchctl list | grep cx.pow.firewall}.empty?
           %x{sudo launchctl unload #{POW_FIREWALL_PLIST_PATH} 2>/dev/null}
         end
       end
 
-      if File.exists? POW_DAEMON_PLIST_PATH
+      if File.exist? POW_DAEMON_PLIST_PATH
         %x{launchctl unload #{POW_DAEMON_PLIST_PATH} 2>/dev/null}
       end
 
@@ -120,7 +120,7 @@ module Powder
         end
         symlink_path = "#{POW_PATH}/#{name}"
         FileUtils.rm_f(symlink_path) if options[:force]
-        FileUtils.ln_s(current_path, symlink_path) unless File.exists?(symlink_path)
+        FileUtils.ln_s(current_path, symlink_path) unless File.exist?(symlink_path)
         say "Your application is now available at http://#{name}.#{domain}/"
       else
         say "Pow is not installed. That is, the ${HOME}/.pow symlink does not exist."
@@ -133,7 +133,7 @@ module Powder
       current_path = %x{pwd}.chomp
       name ||= get_pow_name
       symlink_path = "#{POW_PATH}/default"
-      FileUtils.rm_f symlink_path if File.exists?(symlink_path)
+      FileUtils.rm_f symlink_path if File.exist?(symlink_path)
       FileUtils.ln_sf(current_path, symlink_path)
       say "Your application(#{name}) is now default at http://localhost/"
     end
@@ -142,7 +142,7 @@ module Powder
     def un_default(name=nil)
       name ||= get_pow_name
       symlink_path = "#{POW_PATH}/default"
-      FileUtils.rm_f symlink_path if File.exists?(symlink_path)
+      FileUtils.rm_f symlink_path if File.exist?(symlink_path)
     end
 
     desc "restart", "Restart current pow"
@@ -223,7 +223,7 @@ module Powder
     def cleanup
       Dir[POW_PATH + "/*"].map do |symlink|
         begin
-          FileUtils.rm(symlink) unless File.exists?(File.readlink(symlink))
+          FileUtils.rm(symlink) unless File.exist?(File.readlink(symlink))
         rescue
           # Not all platforms support File.readlink, thus throwing exceptions.
           # Unfortunately we can't decide then if a symlink is invalid.
@@ -368,7 +368,7 @@ module Powder
 
     desc "env_rvm", "Create or add rvm env to .powenv"
     def env_rvm
-      if File.exists?(%x{pwd}.chomp + "/.rvmrc")
+      if File.exist?(%x{pwd}.chomp + "/.rvmrc")
         say %x{rvm env . -- --env >> #{POW_ENV}}
         show_env
       else
@@ -378,8 +378,8 @@ module Powder
 
     private
 
-    def powenv_exists?
-      File.exists?(POW_ENV)
+    def powenv_exist?
+      File.exist?(POW_ENV)
     end
 
     def show_env
@@ -411,7 +411,7 @@ module Powder
     end
 
     def gitignore(filename)
-      if File.exists?(".gitignore") && File.readlines(".gitignore").grep(Regexp.new(filename)).none?
+      if File.exist?(".gitignore") && File.readlines(".gitignore").grep(Regexp.new(filename)).none?
         %x{echo #{filename} >> .gitignore}
         say "\nYou'll probably be wanting to .gitignore that new .powenv file..."
         say "Here, let me take care of that for you.\n\n"
@@ -423,7 +423,7 @@ module Powder
     end
 
     def configured_pow_name
-      return nil unless File.exists?(POWDER_CONFIG)
+      return nil unless File.exist?(POWDER_CONFIG)
 
       File.foreach(POWDER_CONFIG) do |line|
         next if line =~ /^($|#)/
@@ -434,7 +434,7 @@ module Powder
     end
 
     def configured_pow_http_port
-      return 20559 unless File.exists?(POW_CONFIG)
+      return 20559 unless File.exist?(POW_CONFIG)
 
       return File.open(POW_CONFIG).read.match(/export[\s]+POW_HTTP_PORT[\s]*=[\s]*(\d+)/) || 20559
     end
@@ -449,7 +449,7 @@ module Powder
 
     def write_pow_config(name=nil)
       return if ! name || options[:"no-config"]
-      powder_exists = File.exists?(POWDER_CONFIG)
+      powder_exists = File.exist?(POWDER_CONFIG)
       configured_name = get_pow_name
 
       unlink if powder_exists && configured_name != name
@@ -466,7 +466,7 @@ module Powder
     end
 
     def is_powable?
-      if File.exists?('config.ru') || File.exists?('public/index.html')
+      if File.exist?('config.ru') || File.exist?('public/index.html')
         true
       elsif legacy = (is_rails2_app? || is_radiant_app?)
         say "This appears to be a #{legacy} application. You need a config.ru file."
@@ -485,17 +485,17 @@ module Powder
     end
 
     def is_rails2_app?
-      File.exists?('config/environment.rb') &&
+      File.exist?('config/environment.rb') &&
         !`grep RAILS_GEM_VERSION config/environment.rb`.empty? ? 'Rails 2' : nil
     end
 
     def is_radiant_app?
-      File.exists?('config/environment.rb') &&
+      File.exist?('config/environment.rb') &&
         !`grep Radiant::Initializer config/environment.rb`.empty? ? 'Radiant' : nil
     end
 
     def domain
-      if File.exists? File.expand_path(POW_CONFIG)
+      if File.exist? File.expand_path(POW_CONFIG)
         returned_domain = %x{source #{POW_CONFIG}; echo $POW_DOMAINS}.gsub("\n", "").split(",").first
         returned_domain = %x{source #{POW_CONFIG}; echo $POW_DOMAIN}.gsub("\n", "") if returned_domain.nil? || returned_domain.empty?
         returned_domain = 'test' if returned_domain.nil? || returned_domain.empty?
@@ -508,7 +508,7 @@ module Powder
     def check_rdebug_initializer
       rails_initializer =  %x{pwd}.chomp + "/config/initializers/rdebug.rb"
       rack_initializer =  %x{pwd}.chomp + "/rdebug.rb"
-      unless File.exists?(rack_initializer) || File.exists?(rails_initializer)
+      unless File.exist?(rack_initializer) || File.exist?(rails_initializer)
         say "Its appears that the required initializer for rdebug doesn't exists in your application."
         if yes? "Do you want to create it(y/n)?"
           if yes? "This is a Rails/Radiant app(y/n)?"
@@ -534,7 +534,7 @@ module Powder
     end
 
     def start_on_yosemite
-      return say "Pow daemon configuration missing." unless File.exists?(POW_DAEMON_PLIST_PATH)
+      return say "Pow daemon configuration missing." unless File.exist?(POW_DAEMON_PLIST_PATH)
       %x{launchctl bootstrap gui/"$UID" #{POW_DAEMON_PLIST_PATH} 2>/dev/null}
 
       %x{launchctl enable gui/"$UID"/cx.pow.powd 2>/dev/null}
@@ -546,15 +546,15 @@ module Powder
     end
 
     def start_on_mavericks
-      return say "Pow firewall configuration missing." unless File.exists?(POW_FIREWALL_PLIST_PATH)
+      return say "Pow firewall configuration missing." unless File.exist?(POW_FIREWALL_PLIST_PATH)
       %x{launchctl load #{POW_FIREWALL_PLIST_PATH} 2>/dev/null}
 
-      return say "Pow daemon configuration missing." unless File.exists?(POW_DAEMON_PLIST_PATH)
+      return say "Pow daemon configuration missing." unless File.exist?(POW_DAEMON_PLIST_PATH)
       %x{launchctl load #{POW_DAEMON_PLIST_PATH} 2>/dev/null}
     end
 
     def stop_on_mavericks
-      if File.exists? POW_FIREWALL_PLIST_PATH
+      if File.exist? POW_FIREWALL_PLIST_PATH
         if ports = File.open(POW_FIREWALL_PLIST_PATH).read.match(/fwd .*?,([\d]+).*?dst-port ([\d]+)/)
           http_port, dst_port = ports[1..2]
         end
